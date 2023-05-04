@@ -32,6 +32,9 @@ uint8_t counter_comparador;
 unsigned int centena; // Almacena las centenas en  ASCII
 unsigned int decena; // Almacena las decenas en  ASCII
 unsigned int unidad; // Almacena las unidades en  ASCII
+uint8_t uart_data;
+uint8_t numero_recibido; //alamacena el valor que se escribe en la terminal
+
 
 
 
@@ -60,6 +63,15 @@ void    main(void){
   
         //TXREG = counter;
         __delay_ms(10); 
+        
+        
+        //EXTRAAAAAAAAAAAAAAAA
+        TXREG = '\n'; // Enviar nueva línea
+        __delay_ms(10);
+
+        TXREG = '\r'; // Enviar retorno de carro
+        __delay_ms(10);
+
 
         PORTA = counter; //poner el valor del contador en el puerto A
 
@@ -69,10 +81,23 @@ void    main(void){
         //}
         
         if(RCIF == 1){
-            PORTD   =   RCREG;
+            uart_data = RCREG;
             PIR1bits.RCIF = 0; // Borrar el indicador
 
-        }        
+        }   
+        
+    // Verificar si el valor recibido (almacenado en 'uart_data') está en el rango de caracteres numéricos ASCII '0' a '9'
+    if (uart_data >= '0' && uart_data <= '9') {
+        // Convertir el valor ASCII en 'uart_data' a su representación numérica entera
+        // restando el valor ASCII de '0'
+         numero_recibido = uart_data - '0';
+
+        // Verificar si el número recibido está en el rango de 0 a 255
+    if (numero_recibido   >= 0 && numero_recibido   <= 255) {
+            // Si el número recibido está en el rango válido, asignarlo al Puerto D
+            PORTD = uart_data ;
+        }
+    }
         
     }
 }
@@ -162,6 +187,8 @@ void __interrupt() isr(void) {
         // Limpiar la bandera de interrupción de PORTB 
         RBIF = 0;
     }
+     __delay_ms(10);
+
 }
 
 void UART_Write_Char(uint8_t character){
