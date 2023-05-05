@@ -79,20 +79,39 @@ void    main(void){
             uart_data = RCREG;
             PIR1bits.RCIF = 0; // Borrar el indicador
 
-        }   
+        } 
         
-    // Verificar si el valor recibido (almacenado en 'uart_data') está en el rango de caracteres numéricos ASCII '0' a '9'
-    if (uart_data >= '0' && uart_data <= '9') {
-        // Convertir el valor ASCII en 'uart_data' a su representación numérica entera
-        // restando el valor ASCII de '0'
+        if (uart_data >= '0' && uart_data <= '9') {
          numero_recibido = uart_data - '0';
 
-        // Verificar si el número recibido está en el rango de 0 a 255
-    if (numero_recibido   >= 0 && numero_recibido   <= 255) {
-            // Si el número recibido está en el rango válido, asignarlo al Puerto D
-            PORTD = numero_recibido ;
+        if (numero_recibido >= 0 && numero_recibido <= 255) {
+            PORTD = numero_recibido;
         }
     }
+
+// Con este código:
+
+        if (uart_data != 0) {
+            numero_recibido = uart_data;
+
+            if (numero_recibido >= 0 && numero_recibido <= 255) {
+                PORTD = numero_recibido;
+            }
+            uart_data = 0;
+        }
+        
+//    // Verificar si el valor recibido (almacenado en 'uart_data') está en el rango de caracteres numéricos ASCII '0' a '9'
+//    if (uart_data >= '0' && uart_data <= '9') {
+//        // Convertir el valor ASCII en 'uart_data' a su representación numérica entera
+//        // restando el valor ASCII de '0'
+//         numero_recibido = uart_data - '0';
+//
+//        // Verificar si el número recibido está en el rango de 0 a 255
+//    if (numero_recibido   >= 0 && numero_recibido   <= 255) {
+//            // Si el número recibido está en el rango válido, asignarlo al Puerto D
+//            PORTD = numero_recibido ;
+//        }
+//    }
         
     }
 }

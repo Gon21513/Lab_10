@@ -32,17 +32,20 @@ class AppWindow(QWidget):
         self.timer.timeout.connect(self.update_counter)
         self.timer.start(30)  # Actualizar cada 100 ms
 
+    # Corregir la indentación aquí
     def send_value(self):
         value = self.value_input.text()
         if value.isdigit() and 0 <= int(value) <= 255:
-            self.ser.write(str(value).encode())
+            value_as_byte = int(value).to_bytes(1, 'little')
+            self.ser.write(value_as_byte)
 
     def update_counter(self):
         if self.ser.in_waiting:
             data = self.ser.readline().decode().strip()
             if data.isdigit():
                 self.counter_label.setText(f'Counter: {data}')
-                
+
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     window = AppWindow()
