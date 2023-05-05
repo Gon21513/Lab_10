@@ -33,11 +33,9 @@ class AppWindow(QWidget):
         self.timer.start(30)  # Actualizar cada 100 ms
 
     def send_value(self):
-        value = int(self.value_input.text())
-        if 0 <= value <= 255:
-            self.ser.write(chr(value).encode())
-        
-
+        value = self.value_input.text()
+        if value.isdigit() and 0 <= int(value) <= 255:
+            self.ser.write(str(value).encode())
 
     def update_counter(self):
         if self.ser.in_waiting:
@@ -50,5 +48,4 @@ if __name__ == '__main__':
     window = AppWindow()
     window.show()
     sys.exit(app.exec_())
-
 

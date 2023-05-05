@@ -42,15 +42,13 @@ uint8_t numero_recibido; //alamacena el valor que se escribe en la terminal
 
 void setup(void);
 void __interrupt() isr(void);
-void UART_Write_Char(uint8_t character);
-void cadena(char *cursor);
+
 
 
 //-------------main----------------------
 
 void    main(void){
     setup();
-        cadena("Contador:\n\r"); 
 
     while(1){
         TXREG = centena + 48; // Enviar el valor de las centenas
@@ -69,16 +67,13 @@ void    main(void){
         TXREG = '\n'; // Enviar nueva línea
         __delay_ms(10);
 
-        TXREG = '\r'; // Enviar retorno de carro
+        TXREG = '\r'; // Enviar retorno 
         __delay_ms(10);
 
 
         PORTA = counter; //poner el valor del contador en el puerto A
 
-       //if(counter_comparador  != counter){
-      //      UART_Write_Char(counter);
-      //      counter_comparador    =   counter;
-        //}
+ 
         
         if(RCIF == 1){
             uart_data = RCREG;
@@ -95,7 +90,7 @@ void    main(void){
         // Verificar si el número recibido está en el rango de 0 a 255
     if (numero_recibido   >= 0 && numero_recibido   <= 255) {
             // Si el número recibido está en el rango válido, asignarlo al Puerto D
-            PORTD = uart_data ;
+            PORTD = numero_recibido ;
         }
     }
         
@@ -191,16 +186,3 @@ void __interrupt() isr(void) {
 
 }
 
-void UART_Write_Char(uint8_t character){
-    TXREG   =   character;
-    while   (!TXSTAbits.TRMT);
-}
-
-//Funcion para mostrar texto
-void cadena(char *cursor){
-    while (*cursor != '\0'){ //verificar si llega al nulo
-        while (PIR1bits.TXIF == 0); // no haces nada cuando envia
-            TXREG = *cursor; // asigna el valor a enviae
-            *cursor++; // incremeta posicion del cursor
-    }
-}
