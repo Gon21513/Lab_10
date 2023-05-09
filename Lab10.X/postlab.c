@@ -30,45 +30,43 @@
 #include<stdint.h>
 #include<string.h>
 
-//|----------------------------------------------------------------------------|
-//|-------------------------------VARIABLES------------------------------------|
-//|----------------------------------------------------------------------------|
-uint8_t counter;
-uint8_t counter_comp;
+//-----------------------------variables------------------------------------|
+uint8_t counter; // Variable contador, utilizada para llevar cuenta de eventos o ciclos
+uint8_t counter_comp; // Variable de comparación de contador, usada para rastrear cambios en el contador
 
 
-//|----------------------------------------------------------------------------|
-//|------------------------------PROTOTYPES------------------------------------|
-//|----------------------------------------------------------------------------|
-void setup(void);
-void __interrupt() isr(void);
+//-----------------------------prototipos------------------------------------|
 
-void UART_Write(unsigned char* word);
-void UART_Write_Char(uint8_t character);
-//|----------------------------------------------------------------------------|
-//|---------------------------------CODE---------------------------------------|
-//|----------------------------------------------------------------------------|
+void setup(void); // Prototipo para la función de configuración
+void __interrupt() isr(void); // Prototipo para la rutina de servicio de interrupción
 
-void    main(void){
-    setup();
+void UART_Write(unsigned char* word); // Prototipo para función que escribe una cadena de caracteres a la UART
+void UART_Write_Char(uint8_t character); // Prototipo para función que escribe un solo carácter a la UART
+
+
+//-----------------------------main------------------------------------|
+
+
+void main(void){
+    setup(); // Llamada a la función de configuración
     while(1){
-        PORTA   =   counter;
+        PORTA = counter; // Asigna el valor del contador al puerto A
         
         
-        if(counter_comp  != counter){
-            UART_Write_Char(counter);
-            counter_comp    =   counter;
+        if(counter_comp  != counter){ // Si el valor de comparación del contador es diferente al contador
+            UART_Write_Char(counter); // Escribe el valor del contador a la UART
+            counter_comp = counter; // Actualiza el valor de comparación del contador
         }
         
         
-        if(RCIF){
-            PORTD   =   RCREG;
+        if(RCIF){ // Si el flag de interrupción de recepción está establecido
+            PORTD = RCREG; // Lee el registro de recepción en el puerto D
         }
     }
 }
-//|----------------------------------------------------------------------------|
-//|------------------------------FUNCTIONS-------------------------------------|
-//|----------------------------------------------------------------------------|
+
+
+//-----------------------------Setup------------------------------------|
 
 void setup(void){
 //-------------configuracion de puertos----------------
@@ -77,83 +75,74 @@ void setup(void){
     TRISA   =   0;
     TRISD = 0;
     
-     //botones
-    TRISBbits.TRISB0 = 1; //rb0 como entrada
-    TRISBbits.TRISB1 = 1; //rb1 como entrada 
+     // Configuración de botones
+    TRISBbits.TRISB0 = 1; // Configura RB0 como entrada
+    TRISBbits.TRISB1 = 1; // Configura RB1 como entrada
     
-    TRISCbits.TRISC7 = 1; //rb0 como entrada 
+    TRISCbits.TRISC7 = 1; // Configura RC7 como entrada
     
 //----------pullups------------------
-    OPTION_REGbits.nRBPU = 0; //habilitarr pullups
+    OPTION_REGbits.nRBPU = 0; // Habilita pullups
     WPUBbits.WPUB0 = 1;
     WPUBbits.WPUB1 = 1; 
     
-    IOCBbits.IOCB0 = 1; //habilitar interrupciones en rb0
-    IOCBbits.IOCB1 = 1; // habilitar interrupciones en rb1
+    IOCBbits.IOCB0 = 1; // Habilita interrupciones en RB0
+    IOCBbits.IOCB1 = 1; // Habilita interrupciones en RB1
 
 //------------interrupciones-----------------
-    INTCONbits.GIE = 1; //habilitar interrupciones globales
-    INTCONbits.RBIE = 1; //habilitar interrupciones en portb
+    INTCONbits.GIE = 1; // Habilita interrupciones globales
+    INTCONbits.RBIE = 1; // Habilita interrupciones en PORTB
     INTCONbits.PEIE = 1;
-    INTCONbits.RBIF = 0; //limpirar bander de interrupcion de portb
+    INTCONbits.RBIF = 0; // Limpia la bandera de interrupción de PORTB
     
     
-   //Port Inicialization
+   // Inicialización de puertos
     PORTA   =   0;
     PORTB   =   0;
     PORTD   =   0;
     
 //----------UART---------------------------------
-    TXSTAbits.SYNC = 0;//asincrono
-    TXSTAbits.BRGH = 1;//high baud rate select bit
+    TXSTAbits.SYNC = 0;// Configura UART para funcionamiento asincrónico
+    TXSTAbits.BRGH = 1;// Selecciona tasa de baudios alta
     
-    BAUDCTLbits.BRG16 = 0;//utilizar 16 bits baud rate
+    BAUDCTLbits.BRG16 = 0;// Utiliza 16 bits para la tasa de baudios
     
-    SPBRG = 25; //configurar a 9615
-    SPBRGH = 0;    
+    SPBRG = 25; // Configura a 9615 baudios
+    SPBRGH = 0;   
 
+    RCSTAbits.SPEN = 1; // Habilita la comunicación serial
+    RCSTAbits.RX9 = 0; // Deshabilitamos el bit de dirección
+    RCSTAbits.CREN = 1; // Habilita la recepción
+    TXSTAbits.TXEN = 1; // Habilita la transmisión
     
-    RCSTAbits.SPEN = 1;//habilitar la comunicacion serial
-    RCSTAbits.RX9 = 0;//deshabiliamos bit de direccion
-    RCSTAbits.CREN = 1;//habilitar recepcion 
-    TXSTAbits.TXEN = 1;//habiliar la transmision
-    
-    //Variable Inicialization
-    counter =   0;
-    counter_comp    =   255;
+    // Inicialización de Variables
+    counter = 0; // Inicializa contador
+    counter_comp = 255; // Inicializa contador de comparación a 255 (Un valor que el contador nunca alcanzará en su primer ciclo)
 }
 
-       
+//-----------------------------Interrupcion------------------------------------|
 
-//|----------------------------------------------------------------------------|
-//|------------------------------INTERRUPTS------------------------------------|
-//|----------------------------------------------------------------------------|
-void __interrupt() isr(void){
-    if(RBIF){
-        if(RB0==0 && RB1==1){
-            counter++;
+void __interrupt() isr(void){ // Función de interrupción
+    if(RBIF){ // Si se activa la interrupción por cambio en PORTB
+        if(RB0 == 0 && RB1 == 1){ // Si RB0 está en 0 y RB1 en 1
+            counter++; // Incrementa el contador
         }
-        if(RB0==1 && RB1==0){
-            counter--;
+        if(RB0 == 1 && RB1 == 0){ // Si RB0 está en 1 y RB1 en 0
+            counter--; // Decrementa el contador
         }
-        RBIF    =   0;
-        
-    }
-
-}
-
-
-
-    
-void UART_Write(unsigned char* word){   
-    while (*word != 0){                 //Loop until NULL
-        TXREG = (*word);                //Send current array value pointed
-        while(!TXSTAbits.TRMT);         //Make sure TSR is full (value sent)
-        word++;                         //Go to next value in the array
+        RBIF = 0; // Limpia la bandera de interrupción de PORTB
     }
 }
 
-void UART_Write_Char(uint8_t character){
-    TXREG   =   character;
-    while   (!TXSTAbits.TRMT);
+void UART_Write(unsigned char* word){ // Función para escribir una cadena de caracteres a la UART
+    while (*word != 0){ // Loop hasta encontrar el carácter NULL (fin de la cadena de caracteres)
+        TXREG = (*word); // Envia el valor actual del arreglo apuntado
+        while(!TXSTAbits.TRMT); // Asegúrate de que el TSR esté lleno (valor enviado)
+        word++; // Avanza al siguiente valor en el arreglo
+    }
+}
+
+void UART_Write_Char(uint8_t character){ // Función para escribir un solo carácter a la UART
+    TXREG = character; // Escribe el carácter al registro de transmisión
+    while (!TXSTAbits.TRMT); // Espera a que el carácter se haya transmitido completamente
 }
